@@ -143,8 +143,8 @@ void AP_MotorsTailsitter::output_armed_stabilizing()
 
     // apply voltage and air pressure compensation
     const float compensation_gain = get_compensation_gain();
-    roll_thrust = (_roll_in + _roll_in_ff) * compensation_gain;
-    pitch_thrust = _pitch_in + _pitch_in_ff;
+    roll_thrust = (_pitch_in + _pitch_in_ff) * compensation_gain;
+    pitch_thrust = _roll_in + _roll_in_ff;
     yaw_thrust = _yaw_in + _yaw_in_ff;
     throttle_thrust = get_throttle() * compensation_gain;
     const float max_boost_throttle = _throttle_avg_max * compensation_gain;

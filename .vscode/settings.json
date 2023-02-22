@@ -24,7 +24,10 @@
         "xstring": "cpp",
         "xutility": "cpp",
         "iosfwd": "cpp",
-        "ratio": "cpp"
+        "ratio": "cpp",
+        "*.tcc": "cpp",
+        "unordered_map": "cpp",
+        "numeric": "cpp"
     },
     // 切换到当前工作目录
     "terminal.integrated.env.windows": {
@@ -49,5 +52,6 @@
     "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, IndentWidth: 4 }",
     // 粘贴时自动格式化
     "editor.formatOnPaste": false,
+    "C_Cpp.errorSquiggles": "enabled",
 
 }

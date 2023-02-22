@@ -39,6 +39,7 @@ public:
         AUTOROTATE =   26,  // Autonomous autorotation
         AUTO_RTL =     27,  // Auto RTL, this is not a true mode, AUTO will report as this mode if entered to perform a DO_LAND_START Landing sequence
         TURTLE =       28,  // Flip over after crash
+        NARROW_GAP =   29,  //自定义传窄缝航线
     };
 
     // constructor
@@ -1030,7 +1031,70 @@ private:
     // guided mode is paused or not
     bool _paused;
 };
+class ModeNarrowGap : public Mode {
 
+public:
+    // inherit constructor
+    using Mode::Mode;
+    Number mode_number() const override { return Number::GUIDED; }
+
+    bool init(bool ignore_checks) override;
+    void run() override;
+
+    bool requires_GPS() const override { return true; }     // 此模式需要有GPS定位
+    bool has_manual_throttle() const override { return false; }   // 此模式不允许手动控制油门
+    bool allows_arming(AP_Arming::Method method) const override { return true; };    // 此模式下解锁函数重写
+    bool is_autopilot() const override { return true; }    // 此模式为自动飞行控制
+    bool has_user_takeoff(bool must_navigate) const override { return true; }    // 允许在此模式下直接起飞
+    bool in_guided_mode() const override { return true; }    // 此模式是一种引导的模式
+
+    bool is_taking_off() const override;
+
+    // initialises position controller to implement take-off
+    // takeoff_alt_cm is interpreted as alt-above-home (in cm) or alt-above-terrain if a rangefinder is available
+    bool do_user_takeoff_start(float takeoff_alt_cm) override;
+
+    enum class SubMode {
+        TakeOff,
+        WP,
+    };
+
+    SubMode submode() const { return guided_mode; }
+// return guided mode timeout in milliseconds. Only used for velocity, acceleration, angle control, and angular rate control
+    uint32_t get_timeout_ms() const;
+    
+protected:
+    const char *name() const override { return "NARROW_GAP"; }
+    const char *name4() const override { return "GAP"; }
+
+private:
+       // enum for GUID_OPTIONS parameter
+    enum class Options : int32_t {
+        AllowArmingFromTX   = (1U << 0),
+        // this bit is still available, pilot yaw was mapped to bit 2 for symmetry with auto
+        IgnorePilotYaw      = (1U << 2),
+        SetAttitudeTarget_ThrustAsThrust = (1U << 3),
+        DoNotStabilizePositionXY = (1U << 4),
+        DoNotStabilizeVelocityXY = (1U << 5),
+        WPNavUsedForPosControl = (1U << 6),
+    };
+    Vector3f path[10];  // 航点数组
+    int path_num;   //当前航点
+
+    void generate_path();  // 生成航线
+    void wp_control_start();
+
+    void takeoff_run();
+    void wp_control_run();
+    void pause_control_run();
+
+    // controls which controller is run (pos or vel):
+    SubMode guided_mode = SubMode::TakeOff;
+    bool takeoff_complete;      // true once takeoff has completed (used to trigger retracting of landing gear)
+
+    // guided mode is paused or not
+    bool _paused;
+};
 
 class ModeGuidedNoGPS : public ModeGuided {
 
